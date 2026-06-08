@@ -6,3 +6,5 @@ python-bidi
 hijri-converter
 pytz
 pymongo
+python-dotenv
+mongita

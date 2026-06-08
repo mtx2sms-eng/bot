@@ -36,7 +36,7 @@ async def interaction_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     makkah_time = now.strftime("%I:%M %p")
 
     hijri = get_hijri_date()
-    hijri_date = f"{hijri.day}/{hijri.month}/{hijri.year}"
+    hijri_date = f"{hijri.day}/{hijri.month}/{hijri.year}" if hijri else "غير متاح"
 
     gregorian_date = now.strftime("%Y/%m/%d")
 

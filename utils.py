@@ -22,8 +22,11 @@ def get_makkah_time():
 
 def get_hijri_date():
     now = get_makkah_time()
-    hijri = Hijri(now.year, now.month, now.day)
-    return hijri
+    try:
+        hijri = Hijri(now.year, now.month, now.day)
+        return hijri
+    except (OverflowError, ValueError):
+        return None
 
 
 def get_time_until_restart(restart_timestamp):
@@ -63,6 +66,7 @@ async def check_subscription(context, user_id):
 
 
 async def force_subscription(update, context):
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
     user_id = update.effective_user.id
     not_subscribed = await check_subscription(context, user_id)
     if not not_subscribed:
