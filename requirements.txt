@@ -1,0 +1,8 @@
+python-telegram-bot
+Pillow
+matplotlib
+arabic-reshaper
+python-bidi
+hijri-converter
+pytz
+pymongo
