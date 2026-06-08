@@ -26,6 +26,10 @@ def init_db():
     db.group_stats.create_index(
         [("chat_id", ASCENDING), ("date", ASCENDING)], unique=True
     )
+    db.message_counters.create_index(
+        [("chat_id", ASCENDING), ("date", ASCENDING)], unique=True
+    )
+    db.message_logs.create_index([("chat_id", ASCENDING), ("date", ASCENDING)])
     logger.info("Database initialized and indexes created.")
 
 
@@ -33,9 +37,14 @@ def _today():
     return datetime.now().strftime("%Y-%m-%d")
 
 
+def _today_makkah():
+    from utils import get_makkah_time
+    return get_makkah_time().strftime("%Y-%m-%d")
+
+
 def get_group_stats(chat_id: str, date: str = None) -> dict:
     if date is None:
-        date = _today()
+        date = _today_makkah()
     doc = db.group_stats.find_one({"chat_id": str(chat_id), "date": date})
     if doc:
         return doc
@@ -44,7 +53,7 @@ def get_group_stats(chat_id: str, date: str = None) -> dict:
 
 def increment_stat(chat_id: str, stat_key: str, amount: int = 1, date: str = None):
     if date is None:
-        date = _today()
+        date = _today_makkah()
     db.group_stats.update_one(
         {"chat_id": str(chat_id), "date": date},
         {"$inc": {stat_key: amount}},
@@ -54,7 +63,7 @@ def increment_stat(chat_id: str, stat_key: str, amount: int = 1, date: str = Non
 
 def reset_group_stats(chat_id: str, date: str = None):
     if date is None:
-        date = _today()
+        date = _today_makkah()
     db.group_stats.delete_one({"chat_id": str(chat_id), "date": date})
 
 
@@ -119,3 +128,33 @@ def get_user_party(user_id) -> tuple:
             if party:
                 return pid, party
     return None, None
+
+
+def log_message(chat_id: str, user_id: str) -> dict:
+    from utils import get_makkah_time
+
+    today = _today_makkah()
+    now = get_makkah_time()
+    time_str = now.strftime("%H-%M")
+    date_str = now.strftime("%y/%-m/%-d")
+
+    result = db.message_counters.find_one_and_update(
+        {"chat_id": str(chat_id), "date": today},
+        {"$inc": {"count": 1}},
+        upsert=True,
+        return_document=True,
+    )
+    count = result["count"]
+
+    formatted = f"{user_id}-{date_str}({time_str})-{count}"
+
+    db.message_logs.insert_one({
+        "chat_id": str(chat_id),
+        "user_id": str(user_id),
+        "date": today,
+        "time": time_str,
+        "message_number": count,
+        "formatted": formatted,
+    })
+
+    return {"number": count, "formatted": formatted}

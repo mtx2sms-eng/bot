@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 
-from data_manager import get_group_stats, get_restart_time, set_restart_time, register_user
+from data_manager import get_group_stats, get_restart_time, set_restart_time, register_user, increment_stat, log_message
 from utils import get_makkah_time, get_hijri_date, get_time_until_restart, force_subscription, check_subscription_cb
 
 logger = logging.getLogger(__name__)
@@ -119,3 +119,15 @@ async def set_restart_mt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     set_restart_time(chat_id, restart_timestamp)
 
     await update.message.reply_text(f"تم ضبط الرستارت بعد {minutes} دقيقة")
+
+
+async def log_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or update.effective_chat.type == "private":
+        return
+
+    user = update.effective_user
+    chat_id = str(update.effective_chat.id)
+
+    register_user(user)
+    increment_stat(chat_id, "messages")
+    log_message(chat_id, str(user.id))

@@ -12,7 +12,7 @@ from telegram.request import HTTPXRequest
 
 from config import BOT_TOKEN
 from data_manager import init_db, get_all_restart_times, reset_group_stats, delete_restart_time
-from interaction import interaction_handler, set_restart_mi, set_restart_mt
+from interaction import interaction_handler, set_restart_mi, set_restart_mt, log_message_handler
 from utils import check_subscription_cb
 
 logging.basicConfig(
@@ -47,6 +47,11 @@ def main():
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.ChatType.GROUPS & (filters.Regex(r"^تفاعل$") | filters.Regex(r"^التفاعل$")),
         interaction_handler
+    ))
+
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.ChatType.GROUPS,
+        log_message_handler
     ))
 
     app.add_handler(CallbackQueryHandler(check_subscription_cb, pattern=r"^check_subscription$"))
